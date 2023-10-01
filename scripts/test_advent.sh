@@ -1,0 +1,16 @@
+python ./scripts/test.py \
+--cfg ./configs/conf.yml \
+--exp-suffix exp/suffix \
+--data-root path/to/data \
+--source-domain gta \
+--num-classes 19 \
+--test-mode best \
+--use-synth-t2s True \
+--transl-net munit \
+--load-dir-transl  path/to/transl/samples \
+--load-iter-transl 140000 \
+--cfg_munit /path/to/munit/config
+--num-fake-source 1 \
+--use-synth-t2t '' \
+--num-fake-target 0 \
+--new ''
