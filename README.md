@@ -1,8 +1,9 @@
 # Beyond deterministic translation for unsupervised domain adaptation
+![](./img/stoch_transl.png) 
 
-This is the PyTorch implementation of the following paper
-[Beyond deterministic translation for unsupervised domain adaptation](https://arxiv.org/abs/2010.07411)
-Eleni Chiou, Eleftheria Panagiotaki, Iasonas Kokkinos
+This is the PyTorch implementation of the following paper \
+[Beyond deterministic translation for unsupervised domain adaptation](https://arxiv.org/abs/2010.07411) \
+Eleni Chiou, Eleftheria Panagiotaki, Iasonas Kokkinos \
 British Machine Vision Conference (BMVC), 2022
 
 ### Abstract
