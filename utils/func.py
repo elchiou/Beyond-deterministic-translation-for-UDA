@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from advent.utils.loss import cross_entropy_2d
+from utils.loss import cross_entropy_2d
 import torch.nn.functional as F
 
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from advent.dataset.base_dataset import BaseDataset
+from dataset.base_dataset import BaseDataset
 
 class SYNTHIADataSet(BaseDataset):
     def __init__(self, root, list_path, set='all',

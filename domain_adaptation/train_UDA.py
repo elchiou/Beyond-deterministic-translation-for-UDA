@@ -14,12 +14,12 @@ from torch import nn
 from torchvision.utils import make_grid
 from tqdm import tqdm
 
-from advent.model.discriminator import get_fc_discriminator
-from advent.utils.func import adjust_learning_rate, adjust_learning_rate_discriminator
-from advent.utils.func import loss_calc, bce_loss, loss_kl_calc
-from advent.utils.loss import entropy_loss
-from advent.utils.func import prob_2_entropy
-from advent.utils.viz_segmask import colorize_mask
+from model.discriminator import get_fc_discriminator
+from utils.func import adjust_learning_rate, adjust_learning_rate_discriminator
+from utils.func import loss_calc, bce_loss, loss_kl_calc
+from utils.loss import entropy_loss
+from utils.func import prob_2_entropy
+from utils.viz_segmask import colorize_mask
 from munit.utils import vgg_preprocess
 from torch.autograd import Variable
 
@@ -87,8 +87,6 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
     trainloader_iter = enumerate(trainloader)
     targetloader_iter = enumerate(targetloader)
     for i_iter in tqdm(range(args.start_iter, cfg.TRAIN.EARLY_STOP + 1)):
-        if i_iter > args.start_iter + 5:
-            break
         # reset optimizers
         optimizer.zero_grad()
         optimizer_d_aux.zero_grad()
@@ -108,6 +106,8 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
         _, batch = trainloader_iter.__next__()
         images_source, image_source_min_max, labels, _, _ = batch
         if args.use_synth_s2t:
+            # translate source to target using the pretrained image-to-image translation network
+            # it is used to train the target network
             with torch.no_grad():
                 if args.transl_net == 'cyclegan':
                     images_source2target = model_transl.netG_A(image_source_min_max.to(device)).detach()  # G_A(A)
@@ -126,16 +126,16 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
             loss_seg_src_aux = 0
         pred_src_main = interp(pred_src_main)
         loss_seg_src_main = loss_calc(pred_src_main, labels, device)
+        # calculate segmentation loss on source data
         loss = (cfg.TRAIN.LAMBDA_SEG_MAIN * loss_seg_src_main
                 + cfg.TRAIN.LAMBDA_SEG_AUX * loss_seg_src_aux)
-        if args.ignore_source:
-            loss = loss * 0
         loss.backward()
 
-        # adversarial training ot fool the discriminator
+        # adversarial training to fool the discriminator
         _, batch = targetloader_iter.__next__()
         images, images_min_max, ps_label, _, _ = batch
         if args.use_synth_t2s:
+            # translate target to source. it is used to train the source network
             with torch.no_grad():
                 if args.transl_net == 'cyclegan':
                     images = model_transl.netG_B(images_min_max.to(device)).detach()  # G_A(A)
@@ -156,11 +156,11 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
         pred_trg_main = interp_target(pred_trg_main)
         d_out_main = d_main(prob_2_entropy(F.softmax(pred_trg_main)))
         loss_adv_trg_main = bce_loss(d_out_main, source_label)
+        # calculate adversarial loss
         loss = (cfg.TRAIN.LAMBDA_ADV_MAIN * loss_adv_trg_main
                 + cfg.TRAIN.LAMBDA_ADV_AUX * loss_adv_trg_aux)
-        loss_con_trg_main = 0
-        loss_con_trg_aux = 0
-       
+
+        # calculate segmentation loss using pseudolabels when they are available 
         if args.use_ps:
             if cfg.TRAIN.MULTI_LEVEL:
                 loss_seg_trg_aux = loss_calc(pred_trg_aux, ps_label, device)
@@ -233,8 +233,6 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
                           'loss_adv_trg_main': loss_adv_trg_main,
                           'loss_d_aux': loss_d_aux,
                           'loss_d_main': loss_d_main, 
-                          'loss_con_trg_aux': loss_con_trg_aux,
-                          'loss_con_trg_main': loss_con_trg_main, 
                           'loss_seg_trg_aux': loss_seg_trg_aux,
                           'loss_seg_trg_main': loss_seg_trg_main}
         print_losses(current_losses, i_iter)

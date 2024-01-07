@@ -1,13 +1,13 @@
 import numpy as np
 
-from advent.utils import project_root
-from advent.utils.serialization import json_load
-from advent.dataset.base_dataset import BaseDataset
+from utils import project_root
+from utils.serialization import json_load
+from dataset.base_dataset import BaseDataset
 from PIL import Image
 
 
 
-class CityscapesDataSetSSL(BaseDataset):
+class CityscapesDataSetSL(BaseDataset):
     def __init__(self, root, list_path, set='val',
                  max_iters=None,
                  crop_size=(321, 321), mean=(128, 128, 128),

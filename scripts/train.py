@@ -1,13 +1,8 @@
-# --------------------------------------------------------
-# AdvEnt training
-# Copyright (c) 2019 valeo.ai
-#
-# Written by Tuan-Hung Vu
-# --------------------------------------------------------
 import sys
 sys.path.append("../..") # Adds higher directory to python modules path.
 sys.path.append("..") # Adds higher directory to python modules path.
-sys.path.append('/cluster/project9/echiou_domainAdaptation/CVPR_21/ADVENT_CVPR_21/')
+sys.path.append("/home/echiou/Dropbox/PhD/code/Beyond-deterministic-translation-for-UDA/") # Adds higher directory to python modules path.
+
 import argparse
 import os
 import os.path as osp
@@ -20,14 +15,14 @@ import yaml
 import torch
 from torch.utils import data
 
-from advent.model.deeplabv2 import get_deeplab_v2
-from advent.dataset.gta5 import GTA5DataSet
-from advent.dataset.synthia import SYNTHIADataSet
-from advent.dataset.cityscapes import CityscapesDataSet
-from advent.dataset.cityscapes_sl import CityscapesDataSetSL
-from advent.domain_adaptation.config import cfg, cfg_from_file
-from advent.domain_adaptation.train_UDA import train_domain_adaptation
-#from cyclegan.cycle_gan_model import CycleGANModel
+from model.deeplabv2 import get_deeplab_v2
+from dataset.gta5 import GTA5DataSet
+from dataset.synthia import SYNTHIADataSet
+from dataset.cityscapes import CityscapesDataSet
+from dataset.cityscapes_sl import CityscapesDataSetSL
+from domain_adaptation.config import cfg, cfg_from_file
+from domain_adaptation.train_UDA import train_domain_adaptation
+
 from munit.trainer import MUNIT_Trainer
 from munit.utils import get_config
 warnings.filterwarnings("ignore", message="numpy.dtype size changed")
@@ -62,8 +57,7 @@ def get_arguments():
     parser = argparse.ArgumentParser(description="Code for domain adaptation (DA) training")
     parser.add_argument('--cfg', type=str, default=None,
                         help='optional config file', )
-    parser.add_argument('--cfg_munit', type=str, default=
-    '/home/echiou/Dropbox/PhD/code/iccv/ADVENT_2/munit/gta2cityscapes_folder.yaml',
+    parser.add_argument('--cfg_munit', type=str, default='',
                         help='optional config file', )
     parser.add_argument("--random-train", action="store_true",
                         help="not fixing random seed.")
@@ -77,35 +71,46 @@ def get_arguments():
                         help="path to the data")
     parser.add_argument("--project-root", type=str, default=None,
                         help="path to the project")
-    parser.add_argument('--source-domain', type=str, default='gta', help='source domain dataset')
-    parser.add_argument('--num-classes', type=int, default=19, help='number of classes')
+    parser.add_argument('--source-domain', type=str, default='gta', 
+                        help='source domain dataset')
+    parser.add_argument('--num-classes', type=int, default=19, 
+                        help='number of classes')
     parser.add_argument('--train-restore-from', type=str,
                         default='../../pretrained_models/DeepLab_resnet_pretrained_imagenet.pth',
                         help='path to the pretrained deeplab')
-    parser.add_argument('--test-restore-from', type=str, default=' ', help='path to the pretrained deeplab')
-    parser.add_argument('--test-snapshot', type=str, default=' ', help='path to the pretrained deeplab')
-    parser.add_argument('--test-mode', type=str, default='single', help='test mode: single/best')
-    parser.add_argument('--use-synth-s2t', type=bool, default=False, help='use synthetic target: True/False')
-    parser.add_argument('--transl-net', type=str, default='cyclegan', help='translation network: cyclegan/munit')
-    parser.add_argument('--load-dir-transl', type=str, default='.', help='pretrained cyclegan model')
-    parser.add_argument('--load-iter-transl', type=int, default='50000', help='which iteration to load? if load_iter > 0, the code will load models by iter_[load_iter]')
-    parser.add_argument('--batch-size', type=int, default=1, help='batch size')
-    parser.add_argument('--gpu-ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
-    parser.add_argument('--subnorm_type', type=str, default='batch', help='batch or sync_batch')
-    parser.add_argument('--data_aug', type=bool, default=False, help='appearence level data augmentation')
-    parser.add_argument('--var', type=int, default=1, help='variance of the style code')
-    parser.add_argument('--cons_reg', type=bool, default=False, help='consistency regularization')
-    parser.add_argument('--w_cons_loss', type=float, default=0.001, help='consistency loss weight')  # original value is 0.46 and adv after weight is 0.000820124987
-    parser.add_argument('--end_warm_up_iter', type=int, default=5000, help='end warm up iter')
-    parser.add_argument('--use-synth-t2s', type=bool, default=False, help='use synthetic target: True/False')
+    parser.add_argument('--test-restore-from', type=str, default=' ', 
+                        help='path to the pretrained deeplab')
+    parser.add_argument('--test-snapshot', type=str, default=' ', 
+                        help='path to the pretrained deeplab')
+    parser.add_argument('--test-mode', type=str, default='single', 
+                        help='test mode: single/best')
+    parser.add_argument('--use-synth-s2t', type=bool, default=False,
+                        help='use synthetic target: True/False')
+    parser.add_argument('--transl-net', type=str, default='munit', 
+                        help='translation network: munit')
+    parser.add_argument('--load-dir-transl', type=str, default='.', 
+                        help='pretrained munit model')
+    parser.add_argument('--load-iter-transl', type=int, default='50000',
+                        help='which iteration to load? if load_iter > 0,' 
+                        +'the code will load checkpoint iter_[load_iter]')
+    parser.add_argument('--batch-size', type=int, default=1, 
+                        help='batch size')
+    parser.add_argument('--gpu-ids', type=str, default='0', 
+                        help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
+    parser.add_argument('--subnorm_type', type=str, default='batch', 
+                        help='batch or sync_batch')
+    parser.add_argument('--data_aug', type=bool, default=False, 
+                        help='appearence level data augmentation')
+    parser.add_argument('--var', type=int, default=1, 
+                        help='variance of the style code')
+    parser.add_argument('--end_warm_up_iter', type=int, default=5000, 
+                        help='end warm up iter')
+    parser.add_argument('--use-synth-t2s', type=bool, default=False, 
+                        help='use synthetic target: True/False')
     parser.add_argument('--seed', type=int, default=1234, help='seed')
-    parser.add_argument('--half-adv-cons', type=bool, default=False, help='half adv and half consistency')
     parser.add_argument('--use_ps', type=bool, default=False, help='use pseudolabels')
     parser.add_argument('--round', type=int, default=0, help='round of pseudolabeling')
-    parser.add_argument('--ignore-adv', type=bool, default=False, help='ignore adversarial loss')
-    parser.add_argument('--ignore-source', type=bool, default=False, help='ignore source data')
     parser.add_argument('--start-iter', type=int, default=0, help='start iteration')
-    parser.add_argument('--mapping-type', type=str, default='all', help='use all labels or some of them')
 
     return parser.parse_args()
 
@@ -157,8 +162,6 @@ def main():
         def _init_fn(worker_id):
             np.random.seed(cfg.TRAIN.RANDOM_SEED + worker_id)
 
-    if os.environ.get('ADVENT_DRY_RUN', '0') == '1':
-        return
 
     # LOAD SEGMENTATION NET
     assert osp.exists(cfg.TRAIN.RESTORE_FROM), f'Missing init model {cfg.TRAIN.RESTORE_FROM}'
@@ -227,7 +230,7 @@ def main():
                                         info_path=cfg.TRAIN.INFO_TARGET,
                                         max_iters=cfg.TRAIN.MAX_ITERS * cfg.TRAIN.BATCH_SIZE_TARGET,
                                         crop_size=cfg.TRAIN.INPUT_SIZE_TARGET,
-                                        mean=cfg.TRAIN.IMG_MEAN, mapping_type = args.mapping_type)
+                                        mean=cfg.TRAIN.IMG_MEAN)
     else:
         target_dataset = CityscapesDataSet(root=cfg.DATA_DIRECTORY_TARGET,
                                         list_path=cfg.DATA_LIST_TARGET,

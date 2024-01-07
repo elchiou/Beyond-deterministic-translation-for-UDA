@@ -3,8 +3,8 @@ import os.path as osp
 import numpy as np
 from easydict import EasyDict
 
-from advent.utils import project_root
-from advent.utils.serialization import yaml_load
+from utils import project_root
+from utils.serialization import yaml_load
 
 
 cfg = EasyDict()
@@ -17,8 +17,8 @@ cfg.TARGET = 'Cityscapes'
 # Number of workers for dataloading
 cfg.NUM_WORKERS = 4
 # List of training images
-cfg.DATA_LIST_SOURCE = str(project_root / 'advent/dataset/gta5_list/{}.txt')
-cfg.DATA_LIST_TARGET = str(project_root / 'advent/dataset/cityscapes_list/{}.txt')
+cfg.DATA_LIST_SOURCE = str(project_root / 'data/gta5_list/{}.txt')
+cfg.DATA_LIST_TARGET = str(project_root / 'data/cityscapes_list/{}.txt')
 # Directories
 cfg.DATA_DIRECTORY_SOURCE = str(project_root / 'data/GTA5')
 cfg.DATA_DIRECTORY_TARGET = str(project_root / 'data/Cityscapes')
@@ -44,7 +44,7 @@ cfg.TRAIN.INPUT_SIZE_SOURCE = (1280, 720)
 cfg.TRAIN.INPUT_SIZE_TARGET = (1024, 512)
 # Class info
 cfg.TRAIN.INFO_SOURCE = ''
-cfg.TRAIN.INFO_TARGET = str(project_root / 'advent/dataset/cityscapes_list/info.json')
+cfg.TRAIN.INFO_TARGET = str(project_root / 'data/cityscapes_list/info.json')
 # Segmentation network params
 cfg.TRAIN.MODEL = 'DeepLabv2'
 cfg.TRAIN.MULTI_LEVEL = True
@@ -92,7 +92,7 @@ cfg.TEST.SET_TARGET = 'val'
 cfg.TEST.BATCH_SIZE_TARGET = 1
 cfg.TEST.INPUT_SIZE_TARGET = (1024, 512)
 cfg.TEST.OUTPUT_SIZE_TARGET = (2048, 1024)
-cfg.TEST.INFO_TARGET = str(project_root / 'advent/dataset/cityscapes_list/info.json')
+cfg.TEST.INFO_TARGET = str(project_root / 'data/cityscapes_list/info.json')
 cfg.TEST.WAIT_MODEL = False
 
 # pS CONFIGS
@@ -110,7 +110,7 @@ cfg.PS.SET_TARGET = 'val'
 cfg.PS.BATCH_SIZE_TARGET = 1
 cfg.PS.INPUT_SIZE_TARGET = (1024, 512)
 cfg.PS.OUTPUT_SIZE_TARGET = (2048, 1024)
-cfg.PS.INFO_TARGET = str(project_root / 'advent/dataset/cityscapes_list/info.json')
+cfg.PS.INFO_TARGET = str(project_root / 'data/cityscapes_list/info.json')
 
 def _merge_a_into_b(a, b):
     """Merge config dictionary a into config dictionary b, clobbering the
@@ -151,12 +151,12 @@ def cfg_from_file(filename, args):
     yaml_cfg = EasyDict(yaml_load(filename))
     # Directories
     if args.source_domain == 'gta':
-        cfg.DATA_LIST_SOURCE = str(args.project_root + '/advent/dataset/gta5_list/{}.txt')
+        cfg.DATA_LIST_SOURCE = str(args.project_root + '/data/gta5_list/{}.txt')
         cfg.DATA_DIRECTORY_SOURCE = str(args.data_root + '/gta')
     else:
         cfg.SOURCE = 'SYNTHIA'
         yaml_cfg.SOURCE = 'SYNTHIA'
-        cfg.DATA_LIST_SOURCE = str(args.project_root + '/advent/dataset/synthia_list/{}.txt')
+        cfg.DATA_LIST_SOURCE = str(args.project_root + '/data/synthia_list/{}.txt')
         cfg.DATA_DIRECTORY_SOURCE = str(args.data_root + '/rand_cityscapes')
         cfg.TRAIN.INPUT_SIZE_SOURCE = (1280, 760)
         cfg.NUM_CLASSES = args.num_classes
@@ -172,18 +172,15 @@ def cfg_from_file(filename, args):
     cfg.TEST.MODE = args.test_mode
 
     if args.num_classes == 19:
-        cfg.TRAIN.INFO_TARGET = str(args.project_root + '/advent/dataset/cityscapes_list/info.json')
-        cfg.TEST.INFO_TARGET = str(args.project_root + '/advent/dataset/cityscapes_list/info.json')
-        cfg.PS.INFO_TARGET = str(args.project_root + '/advent/dataset/cityscapes_list/info.json')
+        cfg.TRAIN.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info.json')
+        cfg.TEST.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info.json')
+        cfg.PS.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info.json')
     else:
-        cfg.TRAIN.INFO_TARGET = str(args.project_root + '/advent/dataset/cityscapes_list/info16class.json')
-        cfg.TEST.INFO_TARGET = str(args.project_root + '/advent/dataset/cityscapes_list/info16class.json')
-        cfg.PS.INFO_TARGET = str(args.project_root + '/advent/dataset/cityscapes_list/info16class.json')
+        cfg.TRAIN.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info16class.json')
+        cfg.TEST.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info16class.json')
+        cfg.PS.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info16class.json')
     cfg.TRAIN.BATCH_SIZE_SOURCE = args.batch_size
     cfg.TRAIN.BATCH_SIZE_TARGET = args.batch_size
     cfg.TRAIN.RANDOM_SEED = args.seed
-    if args.ignore_adv:
-        yaml_cfg.TRAIN.LAMBDA_ADV_MAIN = 0.0
-        yaml_cfg.TRAIN.LAMBDA_ADV_AUX = 0.0
 
     _merge_a_into_b(yaml_cfg, cfg)
