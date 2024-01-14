@@ -30,7 +30,7 @@ This code was tested with Python 3.6, PyTorch 0.4.1, and CUDA 8.0/9.0.
    git clone https://github.com/elchiou/Beyond-deterministic-translation-for-UDA.git
    ```
 
-### Training
+### Usage
 1. Download the dataset you want to use. The dataset directories should have the following structure.
    ```
    <data_root>/GTA5/                               % GTA dataset root
