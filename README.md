@@ -47,13 +47,20 @@ This code was tested with Python 3.6, PyTorch 0.4.1, and CUDA 8.0/9.0.
    ...
    ```
 2. Setup the ./scripts/configs/config.yaml file.
-3. Train and test the models using the following:
+3. Train the models using the following:
    ```
     ./scripts/train.sh
     ```
-    ```
+   The pretrained stochastic translation network can be downloaded [here](https://www.dropbox.com/scl/fo/jcv6nqu377nfjcjd78x7z/h?rlkey=uhfgbqxg6lun0dxpbkx4vwjiz&dl=0).
+
+4. Evaluate the models using the following:
+   ```
     ./scripts/test.sh
     ```
-
+    The pretrained models for the 3 rounds of training on the GTA5 -> CityScapes using the DeepLab backbone can be downloaded [here](https://www.dropbox.com/scl/fo/9h1dvtt3rhubkow9fh4z2/h?rlkey=yvqmhwl51mxdgav332hw18tvs&dl=0).
+5. Generate pseudolabels using the following:
+    ```
+    ./scripts/gen_pseudolabels.sh
+    ```
 ### Acknowledgements
 This codebase is heavily borrowed from [MUNIT](https://github.com/NVlabs/MUNIT) and [ADVENT](https://github.com/valeoai/ADVENT/).

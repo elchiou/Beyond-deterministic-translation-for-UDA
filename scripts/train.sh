@@ -19,4 +19,3 @@ python scripts/train.py \
 --use-synth-t2s '' \
 --seed 1234 \
 --pseudo-labels-train True \
---round 2 \

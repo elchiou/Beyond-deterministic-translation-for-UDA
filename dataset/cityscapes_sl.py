@@ -24,8 +24,8 @@ class CityscapesDataSetSL(BaseDataset):
 
     def get_metadata(self, name):
         img_file = self.root / 'leftImg8bit_trainvaltest' / 'leftImg8bit' / self.set / name
-        label_name = name.replace("leftImg8bit", "gtFine_labelIds")
-        label_file = self.root / 'gtFine_trainvaltest' /'gtFine' / self.set / label_name
+        folder = 'pseudolabels_round_' + str(self.round)
+        label_file = self.root / 'gtFine_trainvaltest' / 'gtFine' / self.source_dataset / folder / name
         return img_file, label_file
 
     def map_labels(self, input_):

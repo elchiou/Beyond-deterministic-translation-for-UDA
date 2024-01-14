@@ -75,9 +75,9 @@ def get_arguments():
     parser.add_argument('--seed', type=int, default=1234, help='seed')
     parser.add_argument('--pseudo_labels_train', type=bool, default=False,
                          help='use pseudolabels during training : True/False')
-    parser.add_argument('--round', type=int, default=0, help='round of pseudolabeling')
-    parser.add_argument('--start-iter', type=int, default=0, help='start iteration')
-
+    parser.add_argument('--pseudo-label-round', type=int, default=2,
+                         help='round when the labels were generated')
+    parser.add_argument('--start-iter', type=int, default=0, help='start iteration used to resume training')
     return parser.parse_args()
 
 
@@ -173,14 +173,15 @@ def main():
                                     pin_memory=True,
                                     worker_init_fn=_init_fn)
     # use different dataloader when using pseudolabels
-    if args.use_ps:
-        target_dataset = CityscapesDataSet(root=cfg.DATA_DIRECTORY_TARGET,
+
+    if args.pseudo_labels_train:
+        target_dataset = CityscapesDataSetSL(root=cfg.DATA_DIRECTORY_TARGET,
                                         list_path=cfg.DATA_LIST_TARGET,
                                         set=cfg.TRAIN.SET_TARGET,
                                         info_path=cfg.TRAIN.INFO_TARGET,
                                         max_iters=cfg.TRAIN.MAX_ITERS * cfg.TRAIN.BATCH_SIZE_TARGET,
                                         crop_size=cfg.TRAIN.INPUT_SIZE_TARGET,
-                                        mean=cfg.TRAIN.IMG_MEAN)
+                                        mean=cfg.TRAIN.IMG_MEAN, source_dataset=args.source_domain, round=args.pseudo_label_round)
     else:
         target_dataset = CityscapesDataSet(root=cfg.DATA_DIRECTORY_TARGET,
                                         list_path=cfg.DATA_LIST_TARGET,
