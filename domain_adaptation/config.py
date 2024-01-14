@@ -9,22 +9,22 @@ from utils.serialization import yaml_load
 
 cfg = EasyDict()
 
-# COMMON CONFIGS
+## common configs ##
 # source domain
 cfg.SOURCE = 'GTA'
 # target domain
 cfg.TARGET = 'Cityscapes'
 # Number of workers for dataloading
 cfg.NUM_WORKERS = 4
-# List of training images
+# list of training images
 cfg.DATA_LIST_SOURCE = str(project_root / 'data/gta5_list/{}.txt')
 cfg.DATA_LIST_TARGET = str(project_root / 'data/cityscapes_list/{}.txt')
-# Directories
+# directories
 cfg.DATA_DIRECTORY_SOURCE = str(project_root / 'data/GTA5')
 cfg.DATA_DIRECTORY_TARGET = str(project_root / 'data/Cityscapes')
-# Number of object classes
+# number of object classes
 cfg.NUM_CLASSES = 19
-# Exp dirs
+# exp dirs
 cfg.EXP_NAME = ''
 cfg.EXP_ROOT = project_root / ''
 cfg.EXP_ROOT_SNAPSHOT = osp.join(cfg.EXP_ROOT, 'snapshots')
@@ -33,7 +33,7 @@ cfg.EXP_ROOT_LOGS = osp.join(cfg.EXP_ROOT, 'logs')
 # CUDA
 cfg.GPU_ID = 0
 
-# TRAIN CONFIGS
+## train configs ##
 cfg.TRAIN = EasyDict()
 cfg.TRAIN.SET_SOURCE = 'train'
 cfg.TRAIN.SET_TARGET = 'train'
@@ -42,10 +42,10 @@ cfg.TRAIN.BATCH_SIZE_TARGET = 1
 cfg.TRAIN.IGNORE_LABEL = 255
 cfg.TRAIN.INPUT_SIZE_SOURCE = (1280, 720)
 cfg.TRAIN.INPUT_SIZE_TARGET = (1024, 512)
-# Class info
+# class info
 cfg.TRAIN.INFO_SOURCE = ''
 cfg.TRAIN.INFO_TARGET = str(project_root / 'data/cityscapes_list/info.json')
-# Segmentation network params
+# segmentation network params
 cfg.TRAIN.MODEL = 'DeepLabv2'
 cfg.TRAIN.MULTI_LEVEL = True
 cfg.TRAIN.RESTORE_FROM = ''
@@ -56,16 +56,13 @@ cfg.TRAIN.WEIGHT_DECAY = 0.0005
 cfg.TRAIN.POWER = 0.9
 cfg.TRAIN.LAMBDA_SEG_MAIN = 1.0
 cfg.TRAIN.LAMBDA_SEG_AUX = 0.1  # weight of conv4 prediction. Used in multi-level setting.
-# Domain adaptation
+# domain adaptation
 cfg.TRAIN.DA_METHOD = 'AdvEnt'
-# Adversarial training params
+# adversarial training params
 cfg.TRAIN.LEARNING_RATE_D = 1e-4
 cfg.TRAIN.LAMBDA_ADV_MAIN = 0.0
 cfg.TRAIN.LAMBDA_ADV_AUX = 0.0
-# MinEnt params
-cfg.TRAIN.LAMBDA_ENT_MAIN = 0.0
-cfg.TRAIN.LAMBDA_ENT_AUX = 0.0
-# Other params
+# other params
 cfg.TRAIN.MAX_ITERS = 250000
 cfg.TRAIN.EARLY_STOP = 250000
 cfg.TRAIN.SAVE_PRED_EVERY = 1
@@ -74,43 +71,22 @@ cfg.TRAIN.RANDOM_SEED = 1234
 cfg.TRAIN.TENSORBOARD_LOGDIR = ''
 cfg.TRAIN.TENSORBOARD_VIZRATE = 100
 
-# TEST CONFIGS
+## test configs ##
 cfg.TEST = EasyDict()
-cfg.TEST.MODE = 'best'  # {'single', 'best'}
 # model
-cfg.TEST.MODEL = ('DeepLabv2',)
-cfg.TEST.MODEL_WEIGHT = (1.0,)
-cfg.TEST.MULTI_LEVEL = (True,)
+cfg.TEST.MODEL = ('DeepLabv2','DeepLabv2', 'DeepLabv2') # set it to ('DeepLabv2',) to evaluate a single model
+cfg.TEST.MODEL_WEIGHT = (1.0/3, 1.0/3, 1.0/3) # set it to (1,) to evaluate a single model
+cfg.TEST.MULTI_LEVEL = (True, True, True) # set it to (True,) to evaluate a single model
 cfg.TEST.IMG_MEAN = np.array((104.00698793, 116.66876762, 122.67891434), dtype=np.float32)
-cfg.TEST.RESTORE_FROM = ('',)
-cfg.TEST.SNAPSHOT_DIR = ('',)  # used in 'best' mode
-cfg.TEST.SNAPSHOT_STEP = 1  # used in 'best' mode
-cfg.TEST.START_ITER = 80000
-cfg.TEST.SNAPSHOT_MAXITER = 130000  # used in 'best' mode
-# Test sets
-cfg.TEST.SET_TARGET = 'val'
+cfg.TEST.STORE_PS_LABELS = ''
+cfg.TEST.SNAPSHOT_DIR = ('',) 
+# test sets
+cfg.TEST.SET_TARGET = 'val' # set to train to generate pseudolabels for the target domain
 cfg.TEST.BATCH_SIZE_TARGET = 1
 cfg.TEST.INPUT_SIZE_TARGET = (1024, 512)
 cfg.TEST.OUTPUT_SIZE_TARGET = (2048, 1024)
 cfg.TEST.INFO_TARGET = str(project_root / 'data/cityscapes_list/info.json')
 cfg.TEST.WAIT_MODEL = False
-
-# pS CONFIGS
-cfg.PS = EasyDict()
-cfg.PS.MODE = 'single'  # {'single', 'best'}
-# model
-cfg.PS.MODEL = ('DeepLabv2','DeepLabv2', 'DeepLabv2')
-cfg.PS.MODEL_WEIGHT = (1.0/3, 1.0/3, 1.0/3)
-cfg.PS.MULTI_LEVEL = (True, True, True)
-cfg.PS.IMG_MEAN = np.array((104.00698793, 116.66876762, 122.67891434), dtype=np.float32)
-cfg.PS.RESTORE_FROM = ('', '', '')
-cfg.PS.SNAPSHOT_DIR = ('',)  # used in 'best' mode
-# Test sets
-cfg.PS.SET_TARGET = 'val'
-cfg.PS.BATCH_SIZE_TARGET = 1
-cfg.PS.INPUT_SIZE_TARGET = (1024, 512)
-cfg.PS.OUTPUT_SIZE_TARGET = (2048, 1024)
-cfg.PS.INFO_TARGET = str(project_root / 'data/cityscapes_list/info.json')
 
 def _merge_a_into_b(a, b):
     """Merge config dictionary a into config dictionary b, clobbering the
@@ -149,7 +125,7 @@ def cfg_from_file(filename, args):
     """Load a config file and merge it into the default options.
     """
     yaml_cfg = EasyDict(yaml_load(filename))
-    # Directories
+    # directories
     if args.source_domain == 'gta':
         cfg.DATA_LIST_SOURCE = str(args.project_root + '/data/gta5_list/{}.txt')
         cfg.DATA_DIRECTORY_SOURCE = str(args.data_root + '/gta')
@@ -166,19 +142,15 @@ def cfg_from_file(filename, args):
 
     cfg.DATA_DIRECTORY_TARGET = str(args.data_root + '/cityscapes')
     cfg.TRAIN.RESTORE_FROM = args.train_restore_from
-    cfg.TEST.RESTORE_FROM = [args.test_restore_from]
-    cfg.TEST.SNAPSHOT_DIR = [args.test_snapshot]
-    yaml_cfg.TEST.MODE = args.test_mode
-    cfg.TEST.MODE = args.test_mode
-
+    
+    cfg.TEST.STORE_PS_LABELS = args.pseudo_labels_path
+    cfg.TEST.SNAPSHOT_DIR = args.test_snapshot
     if args.num_classes == 19:
         cfg.TRAIN.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info.json')
         cfg.TEST.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info.json')
-        cfg.PS.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info.json')
     else:
         cfg.TRAIN.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info16class.json')
         cfg.TEST.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info16class.json')
-        cfg.PS.INFO_TARGET = str(args.project_root + '/data/cityscapes_list/info16class.json')
     cfg.TRAIN.BATCH_SIZE_SOURCE = args.batch_size
     cfg.TRAIN.BATCH_SIZE_TARGET = args.batch_size
     cfg.TRAIN.RANDOM_SEED = args.seed

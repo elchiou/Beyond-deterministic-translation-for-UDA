@@ -1,16 +1,13 @@
-python ./scripts/test.py \
---cfg ./configs/conf.yml \
---exp-suffix exp/suffix \
---data-root path/to/data \
+python scripts/test.py \
+--cfg scripts/configs/config.yml \
+--exp-suffix '' \
+--data-root path/to/dataset \
+--project-root path/to/code \
 --source-domain gta \
 --num-classes 19 \
---test-mode best \
 --use-synth-t2s True \
---transl-net munit \
---load-dir-transl  path/to/transl/samples \
+--test-snapshot "/path/to/the/pretrained/source/segmentation/model" "/path/to/the/pretrained/target1/segmentation/model" "/path/to/the/pretrained/target2/segmentation/model" \
+--load-dir-transl  /path/to/the/pretrained/image2image/translation/model \
 --load-iter-transl 140000 \
---cfg_munit /path/to/munit/config
---num-fake-source 1 \
---use-synth-t2t '' \
---num-fake-target 0 \
---new ''
+--cfg_munit ./munit/gta2cityscapes.yaml  \
+--num-fake-source 10 \

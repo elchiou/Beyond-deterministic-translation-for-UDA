@@ -36,7 +36,7 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
         writer = SummaryWriter(log_dir=cfg.TRAIN.TENSORBOARD_LOGDIR)
     img_mean = torch.from_numpy(cfg.TRAIN.IMG_MEAN).to(device)
 
-    # SEGMNETATION NETWORK
+    # segmentation network
     model.train()
     if len(args.gpu_ids) > 0:
         assert (torch.cuda.is_available())
@@ -45,10 +45,10 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
     cudnn.benchmark = True
     cudnn.enabled = True
 
-    # DISCRIMINATOR NETWORK
-    # feature-level
+    # discriminator 
     d_aux = get_fc_discriminator(num_classes=num_classes)
     d_aux.train()
+    
     if len(args.gpu_ids) > 0:
         assert (torch.cuda.is_available())
         d_aux.to(device)
@@ -62,7 +62,6 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
         d_main.to(device)
         d_main = torch.nn.DataParallel(d_main, args.gpu_ids)
 
-    # OPTIMIZERS
     # segnet's optimizer
     optimizer = optim.SGD(model.module.optim_parameters(cfg.TRAIN.LEARNING_RATE),
                           lr=cfg.TRAIN.LEARNING_RATE,
@@ -109,12 +108,9 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
             # translate source to target using the pretrained image-to-image translation network
             # it is used to train the target network
             with torch.no_grad():
-                if args.transl_net == 'cyclegan':
-                    images_source2target = model_transl.netG_A(image_source_min_max.to(device)).detach()  # G_A(A)
-                else:
-                    c_a, _ = model_transl.gen_a.encode(image_source_min_max.to(device))
-                    s_b = Variable(np.sqrt(args.var) * torch.randn(image_source_min_max.size(0), cfg_transl['gen']['style_dim'], 1, 1).to(device))
-                    images_source2target = model_transl.gen_b.decode(c_a.detach(), s_b.detach()).detach()
+                c_a, _ = model_transl.gen_a.encode(image_source_min_max.to(device))
+                s_b = Variable(np.sqrt(args.var) * torch.randn(image_source_min_max.size(0), cfg_transl['gen']['style_dim'], 1, 1).to(device))
+                images_source2target = model_transl.gen_b.decode(c_a.detach(), s_b.detach()).detach()
                 images_source = vgg_preprocess(images_source2target, img_mean).detach()
         else:
             images_source = images_source.detach().to(device)
@@ -137,12 +133,9 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
         if args.use_synth_t2s:
             # translate target to source. it is used to train the source network
             with torch.no_grad():
-                if args.transl_net == 'cyclegan':
-                    images = model_transl.netG_B(images_min_max.to(device)).detach()  # G_A(A)
-                else:
-                    c_b, _ = model_transl.gen_b.encode(images_min_max.to(device))
-                    s_a = Variable(torch.randn(images_min_max.size(0), cfg_transl['gen']['style_dim'], 1, 1).to(device))
-                    images = model_transl.gen_a.decode(c_b.detach(), s_a.detach()).detach()
+                c_b, _ = model_transl.gen_b.encode(images_min_max.to(device))
+                s_a = Variable(torch.randn(images_min_max.size(0), cfg_transl['gen']['style_dim'], 1, 1).to(device))
+                images = model_transl.gen_a.decode(c_b.detach(), s_a.detach()).detach()
                 images = vgg_preprocess(images, img_mean).detach()
         else:
             images = images.detach().to(device)
@@ -202,21 +195,6 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
         d_out_main = d_main(prob_2_entropy(F.softmax(pred_trg_main)))
         loss_d_main = bce_loss(d_out_main, target_label)
         loss_d_main = loss_d_main / 2
-
-        if args.data_aug and i_iter > args.end_warm_up_iter:
-            if cfg.TRAIN.MULTI_LEVEL:
-                pred_trg_aux_aug = pred_trg_aux_aug.detach()
-                d_out_aux = d_aux(prob_2_entropy(F.softmax(pred_trg_aux_aug)))
-                loss_d_aux_aug = bce_loss(d_out_aux, target_label)
-                loss_d_aux = loss_d_aux + (loss_d_aux_aug / 2)
-                loss_d_aux = loss_d_aux / 2
-            else:
-                loss_d_aux = 0
-            pred_trg_main_aug = pred_trg_main_aug.detach()
-            d_out_main = d_main(prob_2_entropy(F.softmax(pred_trg_main_aug)))
-            loss_d_main_aug = bce_loss(d_out_main, target_label)
-            loss_d_main = loss_d_main + (loss_d_main_aug / 2)
-            loss_d_main = loss_d_main / 2
         
         if cfg.TRAIN.MULTI_LEVEL:
             loss_d_aux.backward()
@@ -231,8 +209,6 @@ def train_advent(model, model_transl, trainloader, targetloader, args, cfg, cfg_
                           'loss_seg_src_main': loss_seg_src_main,
                           'loss_adv_trg_aux': loss_adv_trg_aux,
                           'loss_adv_trg_main': loss_adv_trg_main,
-                          'loss_d_aux': loss_d_aux,
-                          'loss_d_main': loss_d_main, 
                           'loss_seg_trg_aux': loss_seg_trg_aux,
                           'loss_seg_trg_main': loss_seg_trg_main}
         print_losses(current_losses, i_iter)
